@@ -4,7 +4,8 @@ namespace WebAppTaxi2026.ViewModels
 {
     public class CarCreateViewModel
     {
-       
+        //Add id for model
+        public int Id { get; set; }
         [Required]
         [Display(Name ="Марка")]
         [MinLength(CarBrandMinLength)]

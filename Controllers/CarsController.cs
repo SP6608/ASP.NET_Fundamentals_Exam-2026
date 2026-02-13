@@ -152,6 +152,60 @@ namespace WebAppTaxi2026.Controllers
 
             return View(car);
         }
+        [HttpGet]
+        public IActionResult Edit(int id)
+        {
+            var userId = userManager.GetUserId(User);
+
+            var car = dbContext.Cars
+                .Where(c => c.Id == id && c.Driver.UserId == userId)
+                .Select(c => new CarCreateViewModel
+                {
+                    Id = c.Id,                     
+                    Brand = c.Brand,
+                    RegNumber = c.RegNumber,
+                    Year = c.Year,
+                    Places = c.Places,
+                    InitialFee = c.InitialFee,
+                    PricePerKm = c.PricePerKm,
+                    PricePerMinute = c.PricePerMinute
+                })
+                .SingleOrDefault();
+
+            if (car == null)
+                return NotFound();
+
+            return View(car);
+        }
+
+        [HttpPost]
+        public IActionResult Edit(CarCreateViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var userId = userManager.GetUserId(User);
+
+            var car = dbContext.Cars
+                .FirstOrDefault(c => c.Id == model.Id && c.Driver.UserId == userId);
+
+            if (car == null)
+                return NotFound();
+
+            car.Brand = model.Brand;
+            car.RegNumber = model.RegNumber;
+            car.Year = model.Year;
+            car.Places = model.Places;
+            car.InitialFee = model.InitialFee;
+            car.PricePerKm = model.PricePerKm;
+            car.PricePerMinute = model.PricePerMinute;
+
+            dbContext.SaveChanges();
+
+            return RedirectToAction(nameof(All));
+        }
+
+
 
 
     }
