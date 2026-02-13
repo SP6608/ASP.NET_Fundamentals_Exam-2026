@@ -1,0 +1,158 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using WebAppTaxi2026.Data;
+using WebAppTaxi2026.Models;
+using WebAppTaxi2026.ViewModels;
+
+namespace WebAppTaxi2026.Controllers
+{
+    [Authorize]
+    public class CarsController : Controller
+    {
+        private readonly ApplicationDbContext dbContext;
+        private readonly UserManager<IdentityUser> userManager;
+        public CarsController(ApplicationDbContext dbContext, UserManager<IdentityUser> userManager)
+        {
+            this.dbContext = dbContext;
+            this.userManager = userManager;
+        }
+
+        [HttpGet]
+        
+        public IActionResult Create()
+        {
+
+            var userId = userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+                return Challenge();
+
+            var hasDriver = dbContext.Drivers.AsNoTracking().Any(d => d.UserId == userId);
+            if (!hasDriver)
+                return RedirectToAction("Create", "Drivers");
+
+            return View(new CarCreateViewModel());
+        }
+
+        [HttpPost]
+        
+        public IActionResult Create(CarCreateViewModel model)
+        {
+            var userId = userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Challenge();
+            }
+
+            // 1) Трябва да ИМА Driver профил, иначе не може да добавя кола
+            var driverId = dbContext.Drivers
+                .Where(d => d.UserId == userId)
+                .Select(d => d.Id)
+                .SingleOrDefault();
+
+            if (driverId == 0)
+            {
+                return RedirectToAction("Create", "Drivers");
+            }
+
+            if (!ModelState.IsValid)
+                return View(model);
+
+            // 2) Създаваме кола и я връзваме към DriverId
+            var car = new Car
+            {
+                Brand = model.Brand,
+                RegNumber = model.RegNumber,
+                Year = model.Year,
+                Places = model.Places,
+                InitialFee = model.InitialFee,
+                PricePerKm = model.PricePerKm,
+                PricePerMinute = model.PricePerMinute,
+                DriverId = driverId
+            };
+
+            var regExists = dbContext.Cars
+            .AsNoTracking()
+            .Any(c => c.RegNumber == model.RegNumber);
+
+            if (regExists)
+            {
+                ModelState.AddModelError(nameof(model.RegNumber), "Този регистрационен номер вече съществува.");
+                return View(model);
+            }
+            else
+            {
+                dbContext.Cars.Add(car);
+                dbContext.SaveChanges();
+                return RedirectToAction("Details","Drivers");
+            }
+
+        }
+        [HttpGet]
+        public IActionResult All()
+        {
+            //Колите на точно определен шофьор
+            var userId = userManager.GetUserId(User);
+            var driverId = dbContext.Drivers
+                .AsNoTracking()
+                .Where(d => d.UserId == userId)
+                .Select(d => d.Id)
+                .SingleOrDefault();
+
+            ICollection<CarListItemViewModel>model=dbContext
+                .Cars
+                .Include(c=>c.Driver)
+                .AsNoTracking()
+                .Where(c => c.DriverId == driverId)
+                .Select(c=>new CarListItemViewModel()
+                {
+                    Id = c.Id,
+                    Brand = c.Brand,
+                    RegNumber = c.RegNumber,
+                    Year = c.Year,
+                    Places = c.Places,
+
+                })
+                .ToList();
+            return View(model); 
+        }
+
+        [HttpGet]
+        public IActionResult Details(int id)
+        {
+            var userId = userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Challenge();
+            }
+
+            var car = dbContext.Cars
+                .AsNoTracking()
+                .Where(c => c.Id == id && c.Driver.UserId == userId)
+                .Select(c => new CarDetailsViewModel
+                {
+                    Id = c.Id,
+                    Brand = c.Brand,
+                    RegNumber = c.RegNumber,
+                    Year = c.Year,
+                    Places = c.Places,
+                    InitialFee = c.InitialFee,
+                    PricePerKm = c.PricePerKm,
+                    PricePerMinute = c.PricePerMinute
+                })
+                .FirstOrDefault();
+
+            if (car == null)
+            {
+                return NotFound();
+            }
+
+            return View(car);
+        }
+
+
+    }
+}
