@@ -143,7 +143,7 @@ namespace WebAppTaxi2026.Controllers
                     PricePerKm = c.PricePerKm,
                     PricePerMinute = c.PricePerMinute
                 })
-                .FirstOrDefault();
+                .SingleOrDefault();
 
             if (car == null)
             {
@@ -204,9 +204,5 @@ namespace WebAppTaxi2026.Controllers
 
             return RedirectToAction(nameof(All));
         }
-
-
-
-
     }
 }
