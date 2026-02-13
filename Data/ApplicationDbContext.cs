@@ -13,18 +13,19 @@ namespace WebAppTaxi2026.Data
         }
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            //One IdentityUser One -> Driver
             base.OnModelCreating(builder);
+
             builder.Entity<Driver>()
-            .HasIndex(d => d.UserId)
-            .IsUnique();
+                .HasIndex(d => d.UserId)
+                .IsUnique();
+
             builder.Entity<Driver>()
-            .HasOne(d => d.User)
-            .WithOne()
-            .HasForeignKey<Driver>(d => d.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
-            //Seed data from Driver
-            
+                .HasOne(d => d.User)
+                .WithOne()
+                .HasForeignKey<Driver>(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            var hasher = new PasswordHasher<IdentityUser>();
 
             var user1 = new IdentityUser
             {
@@ -34,9 +35,9 @@ namespace WebAppTaxi2026.Data
                 Email = "driver1@taxi.com",
                 NormalizedEmail = "DRIVER1@TAXI.COM",
                 EmailConfirmed = true,
-                SecurityStamp = Guid.NewGuid().ToString()
+                SecurityStamp = "seed-driver-1"
             };
-            
+            user1.PasswordHash = hasher.HashPassword(user1, "Driver123!");
 
             var user2 = new IdentityUser
             {
@@ -46,13 +47,15 @@ namespace WebAppTaxi2026.Data
                 Email = "driver2@taxi.com",
                 NormalizedEmail = "DRIVER2@TAXI.COM",
                 EmailConfirmed = true,
-                SecurityStamp = Guid.NewGuid().ToString()
+                SecurityStamp = "seed-driver-2"
             };
-           
-            //Seed data from two Drivers
-            builder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+            user2.PasswordHash = hasher.HashPassword(user2, "Driver123!");
 
+            builder.Entity<IdentityUser>().HasData(user1, user2);
+
+            builder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
         }
+
         public virtual DbSet<Driver> Drivers { get; set; } = null!;
         public virtual DbSet<Car> Cars { get; set; } = null!;
         public virtual DbSet<TaxService> TaxServices { get; set; } = null!;
