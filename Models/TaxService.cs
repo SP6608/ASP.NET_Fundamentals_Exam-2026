@@ -1,8 +1,10 @@
 ﻿namespace WebAppTaxi2026.Models
 {
+    using Microsoft.AspNetCore.Authorization;
     using System.ComponentModel.DataAnnotations;
     using System.ComponentModel.DataAnnotations.Schema;
     using static WebAppTaxi2026.Comman.ValidationProperties;
+    [Authorize]
     public class TaxService
     {
         [Key]
