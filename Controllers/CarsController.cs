@@ -61,7 +61,7 @@ namespace WebAppTaxi2026.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            // 2) Създаваме кола и я връзваме към DriverId
+            
             var car = new Car
             {
                 Brand = model.Brand,
@@ -203,6 +203,31 @@ namespace WebAppTaxi2026.Controllers
             dbContext.SaveChanges();
 
             return RedirectToAction(nameof(All));
+        }
+        [HttpGet]
+        public IActionResult Delete(int id)
+        {
+            var userId = userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Challenge();
+            }
+            var model = dbContext.Cars
+                .AsNoTracking()
+                .Where(c => c.Id == id && c.Driver.UserId == userId)
+                .Select(c => new CarDeleteViewModel
+                {
+                    Id = c.Id,
+                    Brand = c.Brand,
+                    RegNumber = c.RegNumber,
+                    Year = c.Year
+                })
+                .SingleOrDefault();
+
+            if (model == null)
+                return NotFound();
+
+            return View(model);
         }
     }
 }
