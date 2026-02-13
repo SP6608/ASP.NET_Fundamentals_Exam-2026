@@ -229,5 +229,30 @@ namespace WebAppTaxi2026.Controllers
 
             return View(model);
         }
+        [HttpPost]
+        
+        public IActionResult Delete(CarDeleteViewModel model)
+        {
+            var userId = userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Challenge();
+            }
+
+            var car = dbContext.Cars
+                .Include(c => c.Driver)
+                .SingleOrDefault(c => c.Id == model.Id && c.Driver.UserId == userId);
+
+            if (car == null)
+            {
+                return NotFound();
+            }
+
+            dbContext.Cars.Remove(car);
+            dbContext.SaveChanges();
+
+            return RedirectToAction(nameof(All));
+        }
+
     }
 }

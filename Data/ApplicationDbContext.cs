@@ -24,7 +24,7 @@ namespace WebAppTaxi2026.Data
             .HasForeignKey<Driver>(d => d.UserId)
             .OnDelete(DeleteBehavior.Cascade);
             //Seed data from Driver
-            var hasher = new PasswordHasher<IdentityUser>();
+            
 
             var user1 = new IdentityUser
             {
@@ -48,8 +48,6 @@ namespace WebAppTaxi2026.Data
                 EmailConfirmed = true,
                 SecurityStamp = Guid.NewGuid().ToString()
             };
-           
-
            
             //Seed data from two Drivers
             builder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
